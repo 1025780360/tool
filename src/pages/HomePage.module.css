@@ -46,7 +46,7 @@
   color: var(--cat-color);
   background: var(--color-surface);
   border: 1.5px solid var(--color-border);
-  transition: all 0.2s;
+  transition: background-color .15s, border-color .15s, color .15s, transform .15s;
 }
 
 .categoryPill:hover {
