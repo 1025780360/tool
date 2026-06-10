@@ -1,0 +1,35 @@
+.header {
+  margin-bottom: 28px;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+  transition: color 0.2s;
+}
+
+.backLink:hover {
+  color: var(--color-primary);
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 6px;
+}
+
+.desc {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 640px) {
+  .title {
+    font-size: 22px;
+  }
+}
