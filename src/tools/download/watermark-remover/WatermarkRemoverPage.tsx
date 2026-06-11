@@ -17,8 +17,9 @@ const PLATFORMS = [
   { pattern: /izuiyou\.com/, name: '最右' },
 ];
 
-const API_BASE = 'https://api.guijianpan.com/waterRemoveDetail/xxmQsyByAk';
-const API_KEY = '31f90c09b9ab4d0daa8a6a957f12a021';
+// 开发时 Vite proxy 转发 /api -> localhost:8051
+// 生产时设为后端地址：VITE_API_URL=https://your-api.zeabur.app
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 interface VideoData {
   title: string;
@@ -35,62 +36,41 @@ function detectPlatform(url: string): string {
   return PLATFORMS.find((p) => p.pattern.test(url))?.name ?? '未知平台';
 }
 
-async function callAPI(videoUrl: string): Promise<{ success: boolean; data?: VideoData; message?: string }> {
-  const targetUrl = `${API_BASE}?ak=${encodeURIComponent(API_KEY)}&link=${encodeURIComponent(videoUrl)}`;
+async function callAPI(videoUrl: string): Promise<{
+  success: boolean; data?: VideoData; message?: string;
+}> {
+  const apiUrl = API_BASE ? `${API_BASE}/api/parse` : '/api/parse';
 
-  // 方法1: 直接调用
   try {
-    const r = await fetch(targetUrl, { headers: { Accept: 'application/json' } });
-    if (r.ok) {
-      return parseResponse(await r.json());
-    }
-  } catch { /* CORS blocked, try proxies */ }
-
-  // 方法2: CORS 代理
-  const corsProxies = [
-    'https://api.allorigins.win/raw?url=',
-    'https://api.codetabs.com/v1/proxy?quest=',
-  ];
-  for (const proxy of corsProxies) {
-    try {
-      const r = await fetch(proxy + encodeURIComponent(targetUrl));
-      if (r.ok) {
-        return parseResponse(await r.json());
-      }
-    } catch { continue; }
+    const r = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: videoUrl }),
+    });
+    const data = await r.json();
+    return parseResponse(data);
+  } catch (e) {
+    return { success: false, message: `请求失败: ${(e as Error).message}` };
   }
-
-  return { success: false, message: '解析失败，请检查链接是否正确或稍后重试' };
 }
 
-function parseResponse(data: Record<string, unknown>): { success: boolean; data?: VideoData; message?: string } {
-  const code = data.code as string;
-  const content = data.content as Record<string, string> | undefined;
-  const respData = data.data as Record<string, string> | undefined;
-
-  if (code === '10000' && content) {
+function parseResponse(data: Record<string, unknown>): {
+  success: boolean; data?: VideoData; message?: string;
+} {
+  // media-parser: { code: 200, success: true, data: { title, video_url, cover_url, author } }
+  if (data.success && data.data) {
+    const d = data.data as Record<string, string>;
     return {
       success: true,
       data: {
-        title: content.title || '未知标题',
-        author: content.author || '未知作者',
-        thumbnail: content.cover || '',
-        downloadUrl: content.url || '',
+        title: d.title || '未知标题',
+        author: d.author || '未知作者',
+        thumbnail: d.cover_url || '',
+        downloadUrl: d.video_url || '',
       },
     };
   }
-  if (code && Number(code) === 200 && respData) {
-    return {
-      success: true,
-      data: {
-        title: respData.title || '未知标题',
-        author: respData.author || '未知作者',
-        thumbnail: respData.cover || '',
-        downloadUrl: respData.url || respData.videoUrl || '',
-      },
-    };
-  }
-  return { success: false, message: (data.msg as string) || (data.message as string) || '解析失败，不支持该链接' };
+  return { success: false, message: (data.message as string) || '解析失败，请检查链接' };
 }
 
 export default function WatermarkRemoverPage() {
@@ -137,11 +117,10 @@ export default function WatermarkRemoverPage() {
     <div className={styles.page}>
       <ToolHeader
         title="短视频去水印"
-        description="支持抖音、快手、小红书、B站、微博、皮皮虾、微视、火山、最右等平台"
+        description="基于自建 media-parser 后端，支持26个平台去水印下载"
       />
 
       <div className={styles.workspace}>
-        {/* Input Section */}
         <div className={styles.inputSection}>
           <div className={styles.inputRow}>
             <ToolInput
@@ -176,14 +155,12 @@ export default function WatermarkRemoverPage() {
           </button>
         </div>
 
-        {/* Error */}
         {error && (
           <div className={styles.errorBox}>
-            <span>⚠️ {error}</span>
+            <span>{error}</span>
           </div>
         )}
 
-        {/* Result */}
         {video && (
           <div className={styles.resultCard}>
             <div className={styles.videoInfo}>
@@ -218,12 +195,11 @@ export default function WatermarkRemoverPage() {
             </div>
 
             <p className={styles.tip}>
-              💡 点击下载后视频将在新标签页打开，长按或右键即可保存
+              点击下载后在新标签页打开视频，右键或长按即可保存
             </p>
           </div>
         )}
 
-        {/* Supported Platforms */}
         <div className={styles.platforms}>
           <h4 className={styles.platformsTitle}>支持的平台</h4>
           <div className={styles.platformList}>
