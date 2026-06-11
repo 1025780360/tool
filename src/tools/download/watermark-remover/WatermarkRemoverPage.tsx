@@ -17,9 +17,10 @@ const PLATFORMS = [
   { pattern: /izuiyou\.com/, name: '最右' },
 ];
 
-// 开发时 Vite proxy 转发 /api -> localhost:8051
-// 生产时设为后端地址：VITE_API_URL=https://your-api.zeabur.app
-const API_BASE = import.meta.env.VITE_API_URL || '';
+// 生产环境使用自建 API，开发时设置 VITE_API_URL= 用本地 proxy
+const API_BASE = import.meta.env.VITE_API_URL !== undefined
+  ? import.meta.env.VITE_API_URL
+  : 'https://qsy.zeabur.app';
 
 interface VideoData {
   title: string;
