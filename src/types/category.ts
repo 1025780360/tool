@@ -5,6 +5,7 @@ export enum ToolCategory {
   IMAGE = 'image',
   CONVERTER = 'converter',
   GENERATOR = 'generator',
+  DOWNLOAD = 'download',
 }
 
 export interface CategoryMeta {
@@ -57,5 +58,12 @@ export const CATEGORIES: Record<ToolCategory, CategoryMeta> = {
     icon: 'wand-2',
     description: '密码生成、Lorem Ipsum、二维码',
     color: '#ec4899',
+  },
+  [ToolCategory.DOWNLOAD]: {
+    id: ToolCategory.DOWNLOAD,
+    label: '视频下载',
+    icon: 'download',
+    description: '短视频去水印下载',
+    color: '#f97316',
   },
 };
