@@ -126,6 +126,13 @@ export default function WatermarkRemoverPage() {
     window.open(video.downloadUrl, '_blank', 'noreferrer');
   }, [video]);
 
+  const handleClear = useCallback(() => {
+    setInput('');
+    setError('');
+    setVideo(null);
+    setThumbnailFail(false);
+  }, []);
+
   const valid = isValidUrl(input);
   const platform = valid ? detectPlatform(input) : null;
 
@@ -155,20 +162,27 @@ export default function WatermarkRemoverPage() {
             </span>
           )}
 
-          <button
-            className={styles.parseBtn}
-            onClick={handleParse}
-            disabled={!valid || loading}
-          >
-            {loading ? (
-              <>
-                <Loader2 size={18} className={styles.spin} />
-                解析中...
-              </>
-            ) : (
-              '开始解析'
+          <div className={styles.btnRow}>
+            <button
+              className={styles.parseBtn}
+              onClick={handleParse}
+              disabled={!valid || loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={18} className={styles.spin} />
+                  解析中...
+                </>
+              ) : (
+                '开始解析'
+              )}
+            </button>
+            {input && (
+              <button className={styles.clearBtn} onClick={handleClear}>
+                清除
+              </button>
             )}
-          </button>
+          </div>
         </div>
 
         {error && (
