@@ -55,13 +55,23 @@ async function callAPI(videoUrl: string): Promise<{
   }
 }
 
+function getAuthor(author: unknown): string {
+  if (!author) return '未知作者';
+  if (typeof author === 'string') return author;
+  if (typeof author === 'object' && author !== null) {
+    const a = author as Record<string, string>;
+    return a.nickname || a.name || a.author_name || '未知作者';
+  }
+  return '未知作者';
+}
+
 function parseResponse(data: Record<string, unknown>): {
   success: boolean; data?: VideoData; message?: string;
 } {
   // media-parser API: { succ, retcode, retdesc, data: { platform, title, video_url, cover_url, author } }
   const ok = data.succ === true || data.retcode === 200;
   if (ok && data.data) {
-    const d = data.data as Record<string, string>;
+    const d = data.data as Record<string, unknown>;
     const hasContent = d.video_url || (d.image_list && (d.image_list as unknown[]).length > 0);
     if (!hasContent) {
       return { success: false, message: '该链接解析未获取到视频，请确认链接正确' };
@@ -69,10 +79,10 @@ function parseResponse(data: Record<string, unknown>): {
     return {
       success: true,
       data: {
-        title: d.title || d.platform + '视频' || '未知标题',
-        author: d.author || '未知作者',
-        thumbnail: d.cover_url || '',
-        downloadUrl: d.video_url || '',
+        title: (d.title as string) || (d.platform as string) + '视频' || '未知标题',
+        author: getAuthor(d.author),
+        thumbnail: (d.cover_url as string) || '',
+        downloadUrl: (d.video_url as string) || '',
       },
     };
   }
