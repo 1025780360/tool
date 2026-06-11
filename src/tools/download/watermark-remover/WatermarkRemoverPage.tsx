@@ -58,20 +58,25 @@ async function callAPI(videoUrl: string): Promise<{
 function parseResponse(data: Record<string, unknown>): {
   success: boolean; data?: VideoData; message?: string;
 } {
-  // media-parser: { code: 200, success: true, data: { title, video_url, cover_url, author } }
-  if (data.success && data.data) {
+  // media-parser API: { succ, retcode, retdesc, data: { platform, title, video_url, cover_url, author } }
+  const ok = data.succ === true || data.retcode === 200;
+  if (ok && data.data) {
     const d = data.data as Record<string, string>;
+    const hasContent = d.video_url || (d.image_list && (d.image_list as unknown[]).length > 0);
+    if (!hasContent) {
+      return { success: false, message: '该链接解析未获取到视频，请确认链接正确' };
+    }
     return {
       success: true,
       data: {
-        title: d.title || '未知标题',
+        title: d.title || d.platform + '视频' || '未知标题',
         author: d.author || '未知作者',
         thumbnail: d.cover_url || '',
         downloadUrl: d.video_url || '',
       },
     };
   }
-  return { success: false, message: (data.message as string) || '解析失败，请检查链接' };
+  return { success: false, message: (data.retdesc as string) || '解析失败，请检查链接是否正确' };
 }
 
 export default function WatermarkRemoverPage() {
